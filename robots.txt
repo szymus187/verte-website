@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://verte.pl/sitemap.xml
+Sitemap: https://verte.one/sitemap.xml
