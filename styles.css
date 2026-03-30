@@ -6,14 +6,10 @@
 /* ================================================
    GRAIN OVERLAY
    ================================================ */
+/* Grain — disabled for performance. The SVG feTurbulence filter
+   causes continuous compositor work on every frame. */
 .grain {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: .025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 180px;
+    display: none;
 }
 
 /* ================================================
@@ -342,39 +338,47 @@ html {
    HERO — DOCUMENT MOCKUP (expanded)
    ================================================ */
 
-/* Scene container */
+/* Scene container — scaled up for visual impact */
 .doc-scene {
     position: relative;
-    width: 420px;
-    height: 440px;
+    width: 520px;
+    height: 540px;
     will-change: transform, opacity;
     transition: opacity .05s linear;
 }
 
-/* Multi-layer glow */
+/* Multi-layer glow — pulses with completion */
 .doc-glow {
     position: absolute;
-    width: 400px;
-    height: 400px;
+    width: 480px;
+    height: 480px;
     background: radial-gradient(circle, rgba(42, 157, 94, .1), transparent 70%);
     border-radius: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     pointer-events: none;
+    animation: glowPulse 10s ease-in-out infinite;
 }
 .doc-glow--amber {
     width: 280px;
     height: 280px;
     background: radial-gradient(circle, rgba(245, 158, 11, .05), transparent 70%);
     transform: translate(-30%, -60%);
+    animation: none;
+}
+
+@keyframes glowPulse {
+    0%, 50% { opacity: .6; transform: translate(-50%, -50%) scale(1); }
+    60%, 82% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); }
+    92%, 100% { opacity: .6; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Orbit ring */
 .orbit-ring {
     position: absolute;
-    width: 340px;
-    height: 340px;
+    width: 420px;
+    height: 420px;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -391,10 +395,16 @@ html {
     background: #56b17f;
     border-radius: 50%;
     box-shadow: 0 0 6px rgba(86, 177, 127, .4);
+    animation: orbitDotPulse 3s ease-in-out infinite;
 }
-.orbit-dot--1 { top: -3px; left: 50%; }
-.orbit-dot--2 { bottom: 20%; right: -3px; }
-.orbit-dot--3 { bottom: -3px; left: 30%; }
+.orbit-dot--1 { top: -3px; left: 50%; animation-delay: 0s; }
+.orbit-dot--2 { bottom: 20%; right: -3px; animation-delay: 1s; }
+.orbit-dot--3 { bottom: -3px; left: 30%; animation-delay: 2s; }
+
+@keyframes orbitDotPulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(86, 177, 127, .4); transform: scale(1); }
+    50% { box-shadow: 0 0 14px rgba(86, 177, 127, .7), 0 0 24px rgba(86, 177, 127, .2); transform: scale(1.3); }
+}
 
 @keyframes orbitSpin {
     to { transform: translate(-50%, -50%) rotate(360deg); }
@@ -408,38 +418,79 @@ html {
     border: 1px solid rgba(0, 0, 0, .05);
     box-shadow: 0 2px 12px rgba(0, 0, 0, .04);
     z-index: 1;
+    will-change: transform, opacity;
+    contain: layout style;
 }
 
 .floating-card--form-v2 {
-    top: 2%;
-    left: -8%;
-    width: 120px;
-    padding: 10px 10px 8px;
+    top: 0%;
+    left: -12%;
+    width: 150px;
+    padding: 12px 12px 10px;
     z-index: 3;
+    border-radius: 12px;
     animation: floatA 7s ease-in-out infinite;
 }
 
 .form-field {
-    margin-bottom: 6px;
+    margin-bottom: 7px;
 }
 .form-field__label {
     display: block;
-    font-size: 7px;
+    font-size: 8px;
     font-weight: 600;
     color: #9ca3af;
     text-transform: uppercase;
     letter-spacing: .04em;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
 }
 .form-field__input {
-    height: 12px;
+    height: 16px;
     background: #f3f4f6;
-    border-radius: 3px;
+    border-radius: 4px;
     overflow: hidden;
     position: relative;
     display: flex;
     align-items: center;
-    padding: 0 3px;
+    padding: 0 5px;
+    border: 1px solid transparent;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+
+/* Active field highlight — opacity-based (GPU-friendly) */
+.form-field__input::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1.5px solid #56b17f;
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+}
+.form-field:nth-child(1) .form-field__input::before {
+    animation: fieldGlow-1 10s ease infinite;
+}
+.form-field:nth-child(2) .form-field__input::before {
+    animation: fieldGlow-2 10s ease infinite;
+}
+.form-field:nth-child(3) .form-field__input::before {
+    animation: fieldGlow-3 10s ease infinite;
+}
+
+@keyframes fieldGlow-1 {
+    0%, 2% { opacity: 0; }
+    3%, 16% { opacity: 1; }
+    18%, 100% { opacity: 0; }
+}
+@keyframes fieldGlow-2 {
+    0%, 17% { opacity: 0; }
+    18%, 27% { opacity: 1; }
+    29%, 100% { opacity: 0; }
+}
+@keyframes fieldGlow-3 {
+    0%, 28% { opacity: 0; }
+    29%, 35% { opacity: 1; }
+    37%, 100% { opacity: 0; }
 }
 .form-field__input--short {
     width: 78%;
@@ -448,7 +499,7 @@ html {
 /* Typewriter text */
 .form-field__typewriter {
     display: inline-block;
-    font-size: 7px;
+    font-size: 9px;
     font-weight: 500;
     font-family: 'Outfit', system-ui, sans-serif;
     color: #1f4d35;
@@ -456,100 +507,123 @@ html {
     overflow: hidden;
     width: 0;
     border-right: 1.5px solid #56b17f;
-    line-height: 12px;
+    line-height: 16px;
 }
 
 /*
-   Typewriter timeline within 8s loop:
-   Field 1 "Budmax Sp. z o.o." — types 0.2s → 1.6s  (18 chars, ~80ms/char)
-   pause ~0.3s
-   Field 2 "631-20-45-871"     — types 1.9s → 2.9s  (13 chars, ~77ms/char)
-   pause ~0.3s
-   Field 3 "8 650 zł"          — types 3.2s → 3.8s  (8 chars, ~75ms/char)
-   Then button pulse at ~4s, rest holds, reset at 7-8s
+   ANIMATION TIMELINE — 10s loop (was 8s — more breathing room)
+   ─────────────────────────────────────────────────────────
+   Phase 1: FORM FILLS (0 → 3.5s)
+     Field 1 "Budmax Sp. z o.o."  0.3s → 1.5s  (18 chars)
+     Field 2 "631-20-45-871"      1.8s → 2.6s  (13 chars)
+     Field 3 "8 650 zł"           2.9s → 3.4s  (8 chars)
+
+   Phase 2: SUBMIT + TRANSFER (3.5 → 5s)
+     Button press              3.5s → 4s
+     Path draws               3.6s → 4.5s
+     Receiver lines fill      3.8s → 4.6s
+     Table rows + bars appear 4.0s → 5.0s
+     Total row                4.8s
+
+   Phase 3: COMPLETION (5 → 7s)
+     Signature draws          5.0s → 5.8s
+     Stamp pops + ripples     5.5s → 6.2s
+     Doc shadow deepens       5.5s → 7s
+     Status card bounces in   5.8s
+     Checkmark draws          5.9s → 6.3s
+     Time card appears        6.2s
+     PDF/XLSX slide in        6.5s / 6.8s
+
+   Phase 4: HOLD + RESET (7 → 10s)
+     Everything holds         7.0 → 8.5s
+     Elements fade out        8.5 → 9.5s
+     Brief pause              9.5 → 10s
+   ─────────────────────────────────────────────────────────
 */
 
 /* "Budmax Sp. z o.o." = 18 chars */
 .form-field__typewriter--1 {
     animation:
-        typewrite-1 8s steps(18) infinite,
-        cursor-1 8s step-end infinite;
+        typewrite-1 10s steps(18) infinite,
+        cursor-1 10s step-end infinite;
 }
 /* "631-20-45-871" = 13 chars */
 .form-field__typewriter--2 {
     animation:
-        typewrite-2 8s steps(13) infinite,
-        cursor-2 8s step-end infinite;
+        typewrite-2 10s steps(13) infinite,
+        cursor-2 10s step-end infinite;
 }
 /* "8 650 zł" = 8 chars */
 .form-field__typewriter--3 {
     animation:
-        typewrite-3 8s steps(8) infinite,
-        cursor-3 8s step-end infinite;
+        typewrite-3 10s steps(8) infinite,
+        cursor-3 10s step-end infinite;
 }
 
-/* Field 1: start 2.5%, done 20% (0.2s → 1.6s) */
+/* Field 1: 0.3s → 1.5s = 3% → 15% */
 @keyframes typewrite-1 {
-    0%, 2.5%  { width: 0; }
-    20%       { width: 100%; }
-    87%       { width: 100%; }
-    94%, 100% { width: 0; }
+    0%, 3%    { width: 0; }
+    15%       { width: 100%; }
+    85%       { width: 100%; }
+    93%, 100% { width: 0; }
 }
-/* Cursor visible only while this field is active */
 @keyframes cursor-1 {
     0%, 2%    { border-color: transparent; }
-    2.5%      { border-color: #56b17f; }
-    23%       { border-color: #56b17f; }
-    23.5%     { border-color: transparent; }
+    3%        { border-color: #56b17f; }
+    17%       { border-color: #56b17f; }
+    17.5%     { border-color: transparent; }
     100%      { border-color: transparent; }
 }
 
-/* Field 2: start 24%, done 36% (1.9s → 2.9s) */
+/* Field 2: 1.8s → 2.6s = 18% → 26% */
 @keyframes typewrite-2 {
-    0%, 24%   { width: 0; }
-    36%       { width: 100%; }
-    87%       { width: 100%; }
-    94%, 100% { width: 0; }
+    0%, 18%   { width: 0; }
+    26%       { width: 100%; }
+    85%       { width: 100%; }
+    93%, 100% { width: 0; }
 }
 @keyframes cursor-2 {
-    0%, 23.5% { border-color: transparent; }
-    24%       { border-color: #56b17f; }
-    39%       { border-color: #56b17f; }
-    39.5%     { border-color: transparent; }
+    0%, 17%   { border-color: transparent; }
+    18%       { border-color: #56b17f; }
+    28%       { border-color: #56b17f; }
+    28.5%     { border-color: transparent; }
     100%      { border-color: transparent; }
 }
 
-/* Field 3: start 40%, done 48% (3.2s → 3.8s) */
+/* Field 3: 2.9s → 3.4s = 29% → 34% */
 @keyframes typewrite-3 {
-    0%, 40%   { width: 0; }
-    48%       { width: 100%; }
-    87%       { width: 100%; }
-    94%, 100% { width: 0; }
+    0%, 29%   { width: 0; }
+    34%       { width: 100%; }
+    85%       { width: 100%; }
+    93%, 100% { width: 0; }
 }
 @keyframes cursor-3 {
-    0%, 39.5% { border-color: transparent; }
-    40%       { border-color: #56b17f; }
-    51%       { border-color: #56b17f; }
-    51.5%     { border-color: transparent; }
+    0%, 28%   { border-color: transparent; }
+    29%       { border-color: #56b17f; }
+    36%       { border-color: #56b17f; }
+    36.5%     { border-color: transparent; }
     100%      { border-color: transparent; }
 }
 
 .form-btn {
-    margin-top: 4px;
+    margin-top: 6px;
     background: #245f40;
     color: white;
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     text-align: center;
-    padding: 4px 0;
-    border-radius: 4px;
-    animation: btnPulse 8s ease-in-out infinite;
+    padding: 5px 0;
+    border-radius: 5px;
+    animation: btnPulseClick 10s ease-in-out infinite;
+    will-change: transform;
 }
-/* Button pulses after all 3 fields are typed (~48% = 3.8s) */
-@keyframes btnPulse {
-    0%, 50% { box-shadow: 0 0 0 0 rgba(36,95,64,0); }
-    54%, 58% { box-shadow: 0 0 0 4px rgba(36,95,64,.3); }
-    64%, 100% { box-shadow: 0 0 0 0 rgba(36,95,64,0); }
+/* Button: press down → release (transform only = GPU accelerated) */
+@keyframes btnPulseClick {
+    0%, 34% { transform: scale(1); opacity: 1; }
+    35% { transform: scale(1.04); opacity: 1; }
+    37% { transform: scale(.9); opacity: .85; }
+    39% { transform: scale(1.03); opacity: 1; }
+    42%, 100% { transform: scale(1); opacity: 1; }
 }
 
 /* ---- SVG connecting path ---- */
@@ -564,19 +638,20 @@ html {
 .connecting-path__line {
     stroke-dasharray: 200;
     stroke-dashoffset: 200;
-    animation: drawPath 8s ease-in-out infinite;
+    animation: drawPath 10s ease-in-out infinite;
 }
+/* Path draws: 3.6s → 4.5s = 36% → 45% */
 @keyframes drawPath {
-    0%, 10% { stroke-dashoffset: 200; }
-    19%, 87% { stroke-dashoffset: 0; }
+    0%, 35% { stroke-dashoffset: 200; }
+    45%, 85% { stroke-dashoffset: 0; }
     93%, 100% { stroke-dashoffset: 200; }
 }
 
 /* ---- Main document ---- */
 .doc-mockup {
-    width: 220px;
+    width: 270px;
     background: white;
-    border-radius: 14px;
+    border-radius: 16px;
     border: 1px solid rgba(0, 0, 0, .06);
     box-shadow:
         0 4px 24px rgba(0, 0, 0, .04),
@@ -595,7 +670,7 @@ html {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-bottom: 1px solid rgba(0, 0, 0, .04);
     background: rgba(240, 249, 244, .5);
 }
@@ -627,31 +702,33 @@ html {
     border-radius: 2.5px;
     transform: scaleX(0);
     transform-origin: left;
-    animation: lineFill 8s ease-in-out infinite;
+    will-change: transform;
+    animation: lineFill 10s ease-in-out infinite;
 }
 .doc-line--recv1 { width: 80%; margin-bottom: 3px; }
-.doc-line--recv1::after { background: #89cca7; animation-delay: 1.2s; }
+.doc-line--recv1::after { background: #89cca7; animation-delay: 0s; }
 .doc-line--recv2 { width: 55%; }
-.doc-line--recv2::after { background: #b8e1c9; animation-delay: 1.5s; }
+.doc-line--recv2::after { background: #b8e1c9; animation-delay: .3s; }
 
+/* Lines fill: 3.8s → 4.6s = 38% → 46% */
 @keyframes lineFill {
-    0%, 14% { transform: scaleX(0); }
-    22%, 85% { transform: scaleX(1); }
-    92%, 100% { transform: scaleX(0); }
+    0%, 37% { transform: scaleX(0); }
+    46%, 85% { transform: scaleX(1); }
+    93%, 100% { transform: scaleX(0); }
 }
 
 /* Invoice table */
 .doc-table {
-    margin-top: 4px;
-    font-size: 8px;
+    margin-top: 6px;
+    font-size: 9px;
 }
 .doc-table__head {
     display: grid;
-    grid-template-columns: 1fr 32px 56px;
+    grid-template-columns: 1fr 36px 64px;
     gap: 4px;
     color: #9ca3af;
     font-weight: 700;
-    font-size: 7px;
+    font-size: 8px;
     text-transform: uppercase;
     letter-spacing: .03em;
     padding-bottom: 3px;
@@ -659,31 +736,47 @@ html {
 }
 .doc-table-row {
     display: grid;
-    grid-template-columns: 1fr 32px 56px;
+    grid-template-columns: 1fr 36px 64px;
     gap: 4px;
-    padding: 3px 0;
+    padding: 4px 0;
     color: #6b7280;
-    font-size: 8px;
+    font-size: 9px;
     opacity: 0;
     transform: translateY(4px);
-    animation: rowAppear 8s ease-in-out infinite;
+    will-change: transform, opacity;
+    animation: rowAppear 10s ease-in-out infinite;
 }
-.doc-table-row--1 { animation-delay: 2.5s; }
-.doc-table-row--2 { animation-delay: 2.9s; }
-.doc-table-row--3 { animation-delay: 3.3s; }
+.doc-table-row--1 { animation-delay: 0s; }
+.doc-table-row--2 { animation-delay: .3s; }
+.doc-table-row--3 { animation-delay: .6s; }
 
 .doc-table-row__fill {
     display: block;
     height: 5px;
     border-radius: 2.5px;
-    background: #daf0e3;
+    background: linear-gradient(90deg, #daf0e3, #b8e1c9);
     align-self: center;
+    width: 75%;
+    transform: scaleX(0);
+    transform-origin: left;
+    will-change: transform;
+    animation: fillBar 10s ease-in-out infinite;
+}
+.doc-table-row--1 .doc-table-row__fill { animation-delay: 0s; }
+.doc-table-row--2 .doc-table-row__fill { animation-delay: .3s; width: 60%; }
+.doc-table-row--3 .doc-table-row__fill { animation-delay: .6s; width: 90%; }
+
+@keyframes fillBar {
+    0%, 39% { transform: scaleX(0); }
+    50%, 85% { transform: scaleX(1); }
+    93%, 100% { transform: scaleX(0); }
 }
 
+/* Rows appear: 4.0s → 5.0s = 40% → 50% */
 @keyframes rowAppear {
-    0%, 30% { opacity: 0; transform: translateY(4px); }
-    38%, 85% { opacity: 1; transform: translateY(0); }
-    92%, 100% { opacity: 0; transform: translateY(4px); }
+    0%, 39% { opacity: 0; transform: translateY(4px); }
+    48%, 85% { opacity: 1; transform: translateY(0); }
+    93%, 100% { opacity: 0; transform: translateY(4px); }
 }
 
 .doc-table__separator {
@@ -693,15 +786,15 @@ html {
 }
 .doc-table__total {
     display: grid;
-    grid-template-columns: 1fr 32px 56px;
+    grid-template-columns: 1fr 36px 64px;
     gap: 4px;
     font-weight: 700;
     color: #1f4d35;
-    font-size: 9px;
+    font-size: 10px;
     padding: 3px 0 0;
     opacity: 0;
-    animation: rowAppear 8s ease-in-out infinite;
-    animation-delay: 3.6s;
+    animation: rowAppear 10s ease-in-out infinite;
+    animation-delay: .8s;
 }
 
 /* Signature SVG */
@@ -716,29 +809,30 @@ html {
 .doc-signature__path {
     stroke-dasharray: 200;
     stroke-dashoffset: 200;
-    animation: drawSignature 8s ease-in-out infinite;
+    animation: drawSignature 10s ease-in-out infinite;
 }
+/* Signature draws: 5.0s → 5.8s = 50% → 58% */
 @keyframes drawSignature {
-    0%, 42% { stroke-dashoffset: 200; }
-    55%, 85% { stroke-dashoffset: 0; }
-    92%, 100% { stroke-dashoffset: 200; }
+    0%, 49% { stroke-dashoffset: 200; }
+    58%, 85% { stroke-dashoffset: 0; }
+    93%, 100% { stroke-dashoffset: 200; }
 }
 
 /* Stamp with ring pulse */
 .doc-stamp-wrapper {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
 }
 .doc-stamp {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     background: #245f40;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: stampPop 8s ease-in-out infinite;
+    animation: stampPop 10s ease-in-out infinite;
     box-shadow: 0 2px 10px rgba(36, 95, 64, .3);
     position: relative;
     z-index: 1;
@@ -748,100 +842,135 @@ html {
     inset: -6px;
     border: 2px solid rgba(86, 177, 127, .4);
     border-radius: 50%;
-    animation: ringPulse 8s ease-in-out infinite;
+    animation: ringPulse 10s ease-in-out infinite;
     z-index: 0;
 }
 
+/* Second ripple ring */
+.doc-stamp-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 1.5px solid rgba(86, 177, 127, .25);
+    border-radius: 50%;
+    animation: ringPulse2 10s ease-in-out infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+
 @keyframes stampPop {
-    0%, 48% { transform: scale(0); opacity: 0; }
-    53% { transform: scale(1.15); opacity: 1; }
-    56%, 85% { transform: scale(1); opacity: 1; }
-    92%, 100% { transform: scale(0); opacity: 0; }
+    0%, 54% { transform: scale(0); opacity: 0; }
+    57% { transform: scale(1.2); opacity: 1; }
+    59% { transform: scale(.9); opacity: 1; }
+    61%, 85% { transform: scale(1); opacity: 1; }
+    93%, 100% { transform: scale(0); opacity: 0; }
 }
 @keyframes ringPulse {
-    0%, 52% { transform: scale(0); opacity: 0; }
-    56% { transform: scale(1); opacity: 1; }
-    65% { transform: scale(1.5); opacity: 0; }
-    66%, 100% { transform: scale(0); opacity: 0; }
+    0%, 56% { transform: scale(0); opacity: 0; }
+    59% { transform: scale(1); opacity: .8; }
+    68% { transform: scale(1.8); opacity: 0; }
+    69%, 100% { transform: scale(0); opacity: 0; }
+}
+@keyframes ringPulse2 {
+    0%, 59% { transform: scale(0); opacity: 0; }
+    62% { transform: scale(1); opacity: .5; }
+    72% { transform: scale(2.2); opacity: 0; }
+    73%, 100% { transform: scale(0); opacity: 0; }
 }
 
 /* ---- Floating: Status notification ---- */
 .floating-card--status {
-    top: 4%;
-    right: -6%;
-    padding: 7px 12px;
+    top: 2%;
+    right: -8%;
+    padding: 8px 14px;
     display: flex;
     align-items: center;
     gap: 6px;
     background: #245f40;
     color: white;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     border-color: rgba(86, 177, 127, .3);
+    border-radius: 10px;
     z-index: 4;
     opacity: 0;
     transform: translateY(8px) scale(.9);
-    animation: statusBounce 8s ease-in-out infinite;
+    animation: statusBounce 10s ease-in-out infinite;
 }
+/* Status card: 5.8s = 58% */
 @keyframes statusBounce {
-    0%, 52% { opacity: 0; transform: translateY(8px) scale(.9); }
-    55% { opacity: 1; transform: translateY(-3px) scale(1.05); }
-    58%, 85% { opacity: 1; transform: translateY(0) scale(1); }
-    92%, 100% { opacity: 0; transform: translateY(8px) scale(.9); }
+    0%, 57% { opacity: 0; transform: translateY(8px) scale(.9); }
+    60% { opacity: 1; transform: translateY(-3px) scale(1.05); }
+    63%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+    93%, 100% { opacity: 0; transform: translateY(8px) scale(.9); }
+}
+
+/* Status checkmark draw: 5.9s → 6.3s */
+.status-check {
+    animation: drawCheck 10s ease-in-out infinite;
+}
+@keyframes drawCheck {
+    0%, 59% { stroke-dashoffset: 20; }
+    64%, 85% { stroke-dashoffset: 0; }
+    93%, 100% { stroke-dashoffset: 20; }
 }
 
 /* ---- Floating: Time savings ---- */
 .floating-card--time {
-    bottom: 8%;
-    left: -8%;
-    padding: 8px 10px;
+    bottom: 6%;
+    left: -10%;
+    padding: 10px 12px;
     display: flex;
     align-items: center;
     gap: 6px;
     z-index: 3;
     opacity: 0;
     transform: translateY(6px);
-    animation: timeAppear 8s ease-in-out infinite;
+    animation: timeAppear 10s ease-in-out infinite;
 }
+/* Time card: 6.2s = 62% */
 @keyframes timeAppear {
-    0%, 55% { opacity: 0; transform: translateY(6px); }
-    60%, 85% { opacity: 1; transform: translateY(0); }
-    92%, 100% { opacity: 0; transform: translateY(6px); }
+    0%, 61% { opacity: 0; transform: translateY(8px) scale(.9); }
+    64% { opacity: 1; transform: translateY(-2px) scale(1.03); }
+    67%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+    93%, 100% { opacity: 0; transform: translateY(8px) scale(.9); }
 }
 
 /* ---- Floating: PDF badge ---- */
 .floating-card--pdf {
-    bottom: 14%;
-    right: -4%;
-    padding: 6px 10px;
+    bottom: 16%;
+    right: -6%;
+    padding: 7px 12px;
     display: flex;
     align-items: center;
     gap: 4px;
     z-index: 3;
     opacity: 0;
     transform: translateY(6px);
-    animation: formatAppear 8s ease-in-out infinite;
+    animation: formatAppear 10s ease-in-out infinite;
     animation-delay: 0s;
 }
 
 /* ---- Floating: XLSX badge ---- */
 .floating-card--xlsx {
-    bottom: 4%;
-    right: 2%;
-    padding: 6px 10px;
+    bottom: 5%;
+    right: 0%;
+    padding: 7px 12px;
     display: flex;
     align-items: center;
     gap: 4px;
     z-index: 3;
     opacity: 0;
     transform: translateY(6px);
-    animation: formatAppear 8s ease-in-out infinite;
+    animation: formatAppear 10s ease-in-out infinite;
     animation-delay: .3s;
 }
+/* Format badges: 6.5s / 6.8s = 65% / 68% */
 @keyframes formatAppear {
-    0%, 60% { opacity: 0; transform: translateY(6px); }
-    66%, 85% { opacity: 1; transform: translateY(0); }
-    92%, 100% { opacity: 0; transform: translateY(6px); }
+    0%, 64% { opacity: 0; transform: translateX(12px) scale(.85); }
+    68% { opacity: 1; transform: translateX(-2px) scale(1.02); }
+    70%, 85% { opacity: 1; transform: translateX(0) scale(1); }
+    93%, 100% { opacity: 0; transform: translateX(12px) scale(.85); }
 }
 
 /* ---- Doc float ---- */
@@ -851,8 +980,18 @@ html {
 }
 
 @keyframes floatA {
-    0%, 100% { transform: translateY(0) rotate(-2deg); }
-    50% { transform: translateY(-10px) rotate(0deg); }
+    0%, 100% { transform: translateY(0) rotate(-2deg); box-shadow: 0 2px 12px rgba(0, 0, 0, .04); }
+    50% { transform: translateY(-10px) rotate(0deg); box-shadow: 0 6px 20px rgba(0, 0, 0, .06); }
+}
+
+/* Form card entrance on first load */
+.floating-card--form-v2 {
+    opacity: 0;
+    animation: formCardEntrance .8s cubic-bezier(.16, 1, .3, 1) .5s forwards, floatA 7s ease-in-out 1.3s infinite;
+}
+@keyframes formCardEntrance {
+    0% { opacity: 0; transform: translateX(-20px) rotate(-4deg) scale(.9); }
+    100% { opacity: 1; transform: translateY(0) rotate(-2deg) scale(1); }
 }
 
 /* ================================================
@@ -1343,7 +1482,59 @@ html {
 }
 
 /* ================================================
-   SCROLL REVEAL
+   HERO GRADIENT MESH (1A)
+   ================================================ */
+.hero-gradient-mesh {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 60% 50% at 20% 40%, rgba(42, 157, 94, .04) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 75% 30%, rgba(245, 158, 11, .03) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 50% 70%, rgba(42, 157, 94, .03) 0%, transparent 60%);
+}
+
+/* ================================================
+   SECTION GRAIN TEXTURE (1B)
+   ================================================ */
+/* Section grain — disabled for performance */
+.section-grain {
+    display: none;
+}
+
+/* ================================================
+   CREAM RADIAL ACCENT (1C)
+   ================================================ */
+.cream-radial-accent {
+    position: relative;
+}
+.cream-radial-accent::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse 50% 40% at 50% 30%, rgba(42, 157, 94, .025) 0%, transparent 70%);
+}
+
+/* ================================================
+   SERVICE CARD HOVER UPGRADE (1D)
+   ================================================ */
+@media (hover: hover) {
+    .service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 48px rgba(13, 35, 24, .08);
+        border-color: rgba(42, 157, 94, .15);
+    }
+    .service-card:hover .service-card__icon {
+        transform: translateY(-2px) scale(1.08);
+        box-shadow: 0 4px 14px rgba(0,0,0,.06);
+    }
+}
+
+/* ================================================
+   SCROLL REVEAL — base + directional variants (1E)
    ================================================ */
 [data-reveal] {
     opacity: 0;
@@ -1351,9 +1542,22 @@ html {
     transition: opacity .7s cubic-bezier(.16, 1, .3, 1), transform .7s cubic-bezier(.16, 1, .3, 1);
 }
 
+[data-reveal="left"] {
+    transform: translateX(-40px);
+}
+[data-reveal="right"] {
+    transform: translateX(40px);
+}
+[data-reveal="scale"] {
+    transform: scale(0.85);
+}
+[data-reveal="fade"] {
+    transform: none;
+}
+
 [data-reveal].visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* ================================================
@@ -1366,11 +1570,11 @@ html {
 
     /* The entire doc-scene is hidden on mobile via hidden md:flex on parent */
     .doc-scene {
-        width: 300px;
-        height: 340px;
+        width: 360px;
+        height: 400px;
     }
     .doc-mockup {
-        width: 180px;
+        width: 200px;
     }
     .floating-card--form-v2,
     .floating-card--pdf,
@@ -1422,8 +1626,14 @@ html {
     .floating-card--pdf { animation: none; opacity: 1; transform: none; }
     .floating-card--xlsx { animation: none; opacity: 1; transform: none; }
     .form-field__typewriter { animation: none; width: 100%; border-color: transparent; }
+    .form-field__input::before { animation: none !important; opacity: 0 !important; }
     .form-btn { animation: none; }
     .orbit-ring { animation: none; }
+    .orbit-dot { animation: none; }
+    .doc-stamp-wrapper::before { animation: none; opacity: 0; }
+    .status-check { animation: none; stroke-dashoffset: 0; }
+    .doc-table-row__fill { animation: none; width: var(--fill-width, 70%); }
+    .doc-glow { animation: none; }
     .service-card__details[aria-hidden="false"] li { animation: none; }
     .service-card__accent { transition: none; transform: scaleX(1); }
     .services-heading-accent::after { transition: none; transform: scaleX(1); }
@@ -1438,6 +1648,14 @@ html {
     .hero-scroll-hint__arrow { animation: none; }
     .hero-cta-primary::before { display: none; }
     .case-bar__fill { transition: none; width: var(--bar-width); }
+    [data-reveal="left"],
+    [data-reveal="right"],
+    [data-reveal="scale"],
+    [data-reveal="fade"] { opacity: 1; transform: none; }
+    .hero-gradient-mesh { display: none; }
+    .section-grain { display: none; }
+    details .faq-content { transition: none; opacity: 1; grid-template-rows: 1fr; }
+    .why-card__accent { transform: scaleX(1); transition: none; }
 }
 
 /* ================================================
@@ -1477,6 +1695,236 @@ textarea:focus-visible {
 /* FAQ Accordion */
 details summary::-webkit-details-marker { display: none; }
 details summary::marker { display: none; }
+details summary {
+    transition: color .2s ease;
+}
+details summary:hover {
+    color: #245f40;
+}
 details[open] > summary { border-bottom: 1px solid rgb(243 244 246); border-radius: 1rem 1rem 0 0; }
-details > div { animation: faq-open 0.3s ease-out; }
+
+/* Smooth open/close via grid trick */
+details .faq-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .35s cubic-bezier(.16, 1, .3, 1), opacity .3s ease;
+    opacity: 0;
+}
+details[open] .faq-content {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+details .faq-content > div {
+    overflow: hidden;
+}
+/* Closing state set by JS */
+details.is-closing .faq-content {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+/* Fallback for no-JS: use simple animation */
+details:not(.faq-enhanced) > div { animation: faq-open 0.3s ease-out; }
 @keyframes faq-open { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+
+/* ================================================
+   VISUAL POLISH — Micro-interactions & Hover States
+   ================================================ */
+
+/* ---- FAQ card hover lift ---- */
+@media (hover: hover) {
+    details.bg-white {
+        transition: transform .3s cubic-bezier(.16, 1, .3, 1),
+                    box-shadow .3s ease,
+                    border-color .3s ease;
+    }
+    details.bg-white:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(13, 35, 24, .04);
+        border-color: rgba(42, 157, 94, .1);
+    }
+    details.bg-white[open] {
+        transform: none;
+        box-shadow: 0 8px 32px rgba(13, 35, 24, .06);
+        border-color: rgba(42, 157, 94, .12);
+    }
+}
+
+/* ---- FAQ icon rotation — smoother ---- */
+details summary svg {
+    transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+}
+
+/* ---- Why-card accent reveal on hover ---- */
+.why-card__accent {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .6s cubic-bezier(.16, 1, .3, 1);
+}
+@media (hover: hover) {
+    .why-card:hover .why-card__accent {
+        transform: scaleX(1);
+    }
+    /* Icon lift on hover */
+    .why-card .w-10 {
+        transition: transform .4s cubic-bezier(.16, 1, .3, 1), box-shadow .4s ease;
+    }
+    .why-card:hover .w-10 {
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,.05);
+    }
+}
+
+/* ---- Process card glow on hover ---- */
+@media (hover: hover) {
+    .process-card {
+        position: relative;
+        overflow: hidden;
+    }
+    .process-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(circle at 50% 0%, rgba(137, 204, 167, .08), transparent 70%);
+        opacity: 0;
+        transition: opacity .4s ease;
+        pointer-events: none;
+    }
+    .process-card:hover::before {
+        opacity: 1;
+    }
+    .process-card:hover {
+        border-color: rgba(137, 204, 167, .15);
+    }
+    /* Number highlight on hover */
+    .process-card .text-5xl {
+        transition: color .3s ease;
+    }
+    .process-card:hover .text-5xl {
+        color: rgba(137, 204, 167, .25);
+    }
+}
+
+/* ---- KSeF FAQ cards — subtle lift ---- */
+@media (hover: hover) {
+    .ksef-faq {
+        transition: background .3s ease, border-color .3s ease, transform .3s cubic-bezier(.16, 1, .3, 1);
+    }
+    .ksef-faq:hover {
+        transform: translateY(-2px);
+    }
+}
+
+/* ---- Button press states (tactile feedback) ---- */
+.hero-cta-primary:active,
+a[class*="bg-verte-700"]:active,
+a[class*="bg-white"]:active,
+button[type="submit"]:active {
+    transform: scale(0.97) !important;
+    transition-duration: .1s !important;
+}
+
+/* ---- Secondary CTA press ---- */
+.hero-cta-secondary:active {
+    transform: scale(0.97);
+    transition-duration: .1s;
+}
+
+/* ---- Contact form input — subtle glow on focus ---- */
+.contact-form-card input:focus,
+.contact-form-card textarea:focus,
+.contact-form-card select:focus {
+    box-shadow: 0 0 0 4px rgba(42, 157, 94, .08), 0 2px 8px rgba(42, 157, 94, .06);
+}
+
+/* ---- Contact form card — subtle border ---- */
+@media (hover: hover) {
+    .contact-form-card {
+        transition: box-shadow .4s ease, border-color .3s ease;
+    }
+    .contact-form-card:focus-within {
+        box-shadow: 0 8px 40px rgba(13, 35, 24, .06);
+        border-color: rgba(42, 157, 94, .1);
+    }
+}
+
+/* ---- Case study stat hover — value highlight ---- */
+@media (hover: hover) {
+    .case-stat {
+        transition: background .3s ease, transform .3s cubic-bezier(.16, 1, .3, 1);
+    }
+    .case-stat:hover {
+        transform: translateY(-2px);
+        background: rgba(42, 157, 94, .05);
+    }
+    .case-stat:hover .case-stat__value {
+        color: #1b4a31;
+    }
+    .case-stat__value {
+        transition: color .3s ease;
+    }
+}
+
+/* ---- Testimonial card — subtle hover ---- */
+@media (hover: hover) {
+    .case-testimonial {
+        transition: transform .4s cubic-bezier(.16, 1, .3, 1), box-shadow .4s ease, border-color .3s ease;
+    }
+    .case-testimonial:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 32px rgba(42, 157, 94, .06);
+        border-color: rgba(42, 157, 94, .12);
+    }
+}
+
+/* ---- Social proof number hover glow ---- */
+@media (hover: hover) {
+    .bg-verte-950 [data-count] {
+        transition: text-shadow .3s ease;
+    }
+    .bg-verte-950 [data-count]:hover {
+        text-shadow: 0 0 20px rgba(137, 204, 167, .3);
+    }
+}
+
+/* ---- Nav CTA button shimmer ---- */
+.hidden.md\\:block a[href="#contact"] {
+    position: relative;
+    overflow: hidden;
+}
+.hidden.md\\:block a[href="#contact"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .12), transparent);
+    transform: skewX(-20deg);
+    pointer-events: none;
+}
+.hidden.md\\:block a[href="#contact"]:hover::before {
+    animation: ctaShimmer .6s ease-out;
+}
+
+/* ---- About photo — breathing glow ---- */
+@media (hover: hover) {
+    .about-photo::before {
+        transition: border-color .4s ease, inset .4s cubic-bezier(.16, 1, .3, 1);
+    }
+    .about-photo:hover::before {
+        border-color: rgba(42, 157, 94, .25);
+        inset: -12px;
+    }
+}
+
+/* ---- Smooth focus-within for all links with arrows ---- */
+a svg,
+button svg {
+    transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+}
+a:hover > svg:last-child,
+button:hover > svg:last-child {
+    transform: translateX(2px);
+}

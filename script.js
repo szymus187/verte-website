@@ -16,12 +16,6 @@ function onScrollRAF(callback) {
     }, { passive: true });
 }
 
-function pluralize(n, one, few, many) {
-    if (n === 1) return one;
-    if (n >= 2 && n <= 4) return few;
-    return many;
-}
-
 const BTN_CLASSES = {
     default: ['bg-verte-700', 'hover:bg-verte-800'],
     success: ['bg-verte-500'],
@@ -120,9 +114,9 @@ class Navigation {
 }
 
 // ================================================
-// SCROLL REVEAL — IntersectionObserver
+// SCROLL REVEAL — CSS-driven with stagger
 // ================================================
-class ScrollReveal {
+class AnimeScrollReveal {
     constructor() {
         this.observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -158,7 +152,7 @@ class HeroParallax {
         if (!this.scene || window.matchMedia('(max-width: 767px)').matches) return;
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-        this.update(); // initial check (handles reload with scroll)
+        this.update();
         onScrollRAF(() => this.update());
     }
 
@@ -327,9 +321,9 @@ class ServiceCards {
 }
 
 // ================================================
-// CASE STUDY — animated counters
+// CASE STUDY — animated counters (lightweight rAF)
 // ================================================
-class CaseCounters {
+class AnimeCaseCounters {
     constructor() {
         this.els = document.querySelectorAll('[data-count]');
         if (!this.els.length) return;
@@ -358,14 +352,14 @@ class CaseCounters {
     animate(el) {
         const target = parseInt(el.dataset.count, 10);
         const suffix = el.dataset.suffix || '';
-        const duration = 1200;
+        const duration = 1400;
         const start = performance.now();
 
         const step = (now) => {
             const progress = Math.min((now - start) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-            const current = Math.round(eased * target);
-            el.textContent = current + suffix;
+            // easeOutExpo approximation
+            const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            el.textContent = Math.round(eased * target) + suffix;
             if (progress < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
@@ -388,35 +382,6 @@ class HeroScrollHint {
             }
         };
         window.addEventListener('scroll', onScroll, { passive: true });
-    }
-}
-
-// ================================================
-// KSeF COUNTDOWN
-// ================================================
-class KsefCountdown {
-    constructor() {
-        this.el = document.getElementById('ksef-countdown');
-        this.copy = document.getElementById('ksef-copy');
-        if (!this.el) return;
-        this.update();
-    }
-
-    update() {
-        const deadline = new Date('2026-04-01T00:00:00');
-        const now = new Date();
-        const diff = deadline - now;
-
-        if (diff <= 0) {
-            this.el.textContent = 'KSeF jest już obowiązkowy!';
-            if (this.copy) {
-                this.copy.textContent = 'Obowiązkowe e-fakturowanie już obowiązuje. Jeśli Twoja firma jeszcze nie wdrożyła KSeF — czas działać. Pomożemy Ci szybko nadrobić zaległości i uniknąć kar.';
-            }
-            return;
-        }
-
-        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        this.el.textContent = `Zostało tylko ${days} ${pluralize(days, 'dzień', 'dni', 'dni')} do obowiązkowego KSeF!`;
     }
 }
 
@@ -501,17 +466,64 @@ class MobileCTA {
 }
 
 // ================================================
+// FAQ SMOOTH ACCORDION — animated open + close
+// ================================================
+class FaqAccordion {
+    constructor() {
+        this.details = document.querySelectorAll('#faq details');
+        if (!this.details.length) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        this.details.forEach(detail => {
+            detail.classList.add('faq-enhanced');
+            detail.querySelector('summary').addEventListener('click', (e) => {
+                e.preventDefault();
+                if (detail.open) {
+                    this.close(detail);
+                } else {
+                    this.open(detail);
+                }
+            });
+        });
+    }
+
+    open(detail) {
+        detail.open = true;
+        // Force reflow so the transition triggers from 0fr
+        detail.querySelector('.faq-content');
+    }
+
+    close(detail) {
+        detail.classList.add('is-closing');
+        const content = detail.querySelector('.faq-content');
+        const onEnd = () => {
+            detail.classList.remove('is-closing');
+            detail.open = false;
+            content.removeEventListener('transitionend', onEnd);
+        };
+        content.addEventListener('transitionend', onEnd);
+        // Fallback if transitionend doesn't fire
+        setTimeout(() => {
+            if (detail.classList.contains('is-closing')) {
+                detail.classList.remove('is-closing');
+                detail.open = false;
+            }
+        }, 400);
+    }
+}
+
+// ================================================
 // INIT
 // ================================================
 document.addEventListener('DOMContentLoaded', () => {
     new Navigation();
     new ScrollSpy();
     new MobileCTA();
-    new ScrollReveal();
+    new AnimeScrollReveal();
     new HeroParallax();
     new ContactForm();
     new ServiceCards();
     new HeroScrollHint();
-    new CaseCounters();
-    new KsefCountdown();
+    new AnimeCaseCounters();
+    new FaqAccordion();
 });
