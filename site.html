@@ -45,6 +45,11 @@ body{margin:0;background:#faf8f5;font-family:Outfit,system-ui,sans-serif;-webkit
 [data-reveal="scale"]{transform:scale(0.85)}
 [data-reveal="fade"]{transform:none}
 [data-reveal].visible{opacity:1;transform:none}
+/* Page loader */
+#page-loader{position:fixed;inset:0;z-index:9999;background:#faf8f5;display:flex;align-items:center;justify-content:center;transition:opacity .4s ease,visibility .4s ease}
+#page-loader.loaded{opacity:0;visibility:hidden;pointer-events:none}
+#page-loader .loader-logo{width:40px;height:40px;background:#245f40;border-radius:10px;display:flex;align-items:center;justify-content:center;animation:loaderPulse 1.2s ease-in-out infinite}
+@keyframes loaderPulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.1);opacity:1}}
 </style>
     <link rel="stylesheet" href="tailwind-output.css" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="styles.css" media="print" onload="this.media='all'">
@@ -239,6 +244,12 @@ body{margin:0;background:#faf8f5;font-family:Outfit,system-ui,sans-serif;-webkit
 <noscript><style>[data-reveal]{opacity:1!important;transform:none!important}</style></noscript>
 </head>
 <body class="bg-cream-50 text-gray-800 font-body antialiased overflow-x-hidden">
+    <!-- Page loader — hides FOUC until CSS is ready -->
+    <div id="page-loader" aria-hidden="true">
+        <div class="loader-logo">
+            <svg width="20" height="20" viewBox="0 0 16 16" fill="none"><path d="M8 1L2 5v6l6 4 6-4V5L8 1z" fill="white" opacity=".9"/></svg>
+        </div>
+    </div>
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-verte-700 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold">
         Przejdź do treści
     </a>
@@ -1480,5 +1491,16 @@ body{margin:0;background:#faf8f5;font-family:Outfit,system-ui,sans-serif;-webkit
     </div>
 
     <script src="script.js" defer></script>
+    <script>
+        // Dismiss loader once CSS is loaded
+        window.addEventListener('load', function() {
+            document.getElementById('page-loader').classList.add('loaded');
+        });
+        // Fallback: dismiss after 2s even if load event doesn't fire
+        setTimeout(function() {
+            var l = document.getElementById('page-loader');
+            if (l) l.classList.add('loaded');
+        }, 2000);
+    </script>
 </body>
 </html>
